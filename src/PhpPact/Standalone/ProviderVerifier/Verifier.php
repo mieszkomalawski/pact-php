@@ -4,6 +4,7 @@ namespace PhpPact\Standalone\ProviderVerifier;
 
 use PhpPact\Broker\Service\BrokerHttpClient;
 use PhpPact\Broker\Service\BrokerHttpClientInterface;
+use PhpPact\Http\ClientInterface;
 use PhpPact\Http\GuzzleClient;
 use PhpPact\Standalone\Installer\Exception\FileDownloadFailureException;
 use PhpPact\Standalone\Installer\Exception\NoDownloaderFoundException;
@@ -210,9 +211,26 @@ class Verifier
     private function getBrokerHttpClient(): BrokerHttpClient
     {
         if (!$this->brokerHttpClient) {
-            $this->brokerHttpClient = new BrokerHttpClient(new GuzzleClient(), $this->config->getBrokerUri());
+            $this->brokerHttpClient = new BrokerHttpClient($this->getClient(), $this->config->getBrokerUri());
         }
 
         return $this->brokerHttpClient;
+    }
+
+    /**
+     * @return ClientInterface
+     */
+    private function getClient(): ClientInterface
+    {
+        $user = $this->config->getBrokerUsername();
+        $pass = $this->config->getBrokerPassword();
+        $params = [];
+        if ($user && $pass) {
+            $params['auth'] = [
+                $user,
+                $pass,
+            ];
+        }
+        return new GuzzleClient($params);
     }
 }
